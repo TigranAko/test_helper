@@ -1,0 +1,38 @@
+{
+    "questions": [
+        {
+            "question": "Развитием и поддержкой ОС Android, главным образом, занимается компания:",
+            "answers": [
+                {
+                    "text": "Android"
+                },
+                {
+                    "text": "Apple"
+                },
+                {
+                    "text": "Google"
+                },
+                {
+                    "text": "Microsoft"
+                }
+            ]
+        },
+        {
+            "question": "Ядро какой операционной системы использовалось в качестве базы для ОС Android?",
+            "answers": [
+                {
+                    "text": "Linux"
+                },
+                {
+                    "text": "Windows"
+                },
+                {
+                    "text": "Mac OS"
+                },
+                {
+                    "text": "OS/2"
+                }
+            ]
+        }
+    ]
+}
