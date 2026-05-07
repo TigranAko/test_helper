@@ -1,0 +1,42 @@
+{
+    "questions": [
+        {
+            "question": "Матрица, размером (1х5) называется.........",
+            "answers": [
+                {
+                    "text": "матрица-столбец",
+                    "isCorrect": false
+                },
+                {
+                    "text": "единичная",
+                    "isCorrect": false
+                },
+                {
+                    "text": "матрица-строка",
+                    "isCorrect": true
+                }
+            ]
+        },
+        {
+            "question": "Матрица (1 0 0 0 5 0 0 0 9) называется...",
+            "answers": [
+                {
+                    "text": "Единичная",
+                    "isCorrect": false
+                },
+                {
+                    "text": "Нулевая",
+                    "isCorrect": false
+                },
+                {
+                    "text": "Диагональная",
+                    "isCorrect": true
+                },
+                {
+                    "text": "Симметричная",
+                    "isCorrect": true
+                }
+            ]
+        }
+    ]
+}
