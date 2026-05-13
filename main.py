@@ -6,6 +6,11 @@ from fastapi import FastAPI, UploadFile
 from uvicorn import run
 
 from mvp1_text2json import parse_test
+from mvp2_json2answer import process_test
+
+
+from time import sleep
+import json
 
 app = FastAPI(title="Тест")
 
@@ -17,6 +22,7 @@ def main():
 
 @app.post("/file")
 async def upload_file(test_file: UploadFile):
+    # TODO: нужно разделить на несколько эндпоинтов
     print(test_file.content_type)
     print(test_file.filename)
     file_title = test_file.filename.split(".")[0]
@@ -29,21 +35,27 @@ async def upload_file(test_file: UploadFile):
             await file.write(chunk)
             # TODO: файл можно не сохранять
 
-    test = docx2txt.process(f"./files/{test_file.filename}")
-    try:
-        data = parse_test(test)
+    test_json = docx2txt.process(f"./files/{test_file.filename}")
+    # try:
+    data = parse_test(test_json)
 
-        with open(f"files/{file_title}.json", "w", encoding="utf-8") as file:
-            file.write(data.model_dump_json(indent=4))
+    with open(f"files/{file_title}.json", "w", encoding="utf-8") as file:
+        file.write(data.model_dump_json())
 
-        return {
-            "filename": test_file.filename,
-            "file_title": file_title,
-            "result": data.model_dump(),
-        }
+    sleep(3)
 
-    except Exception as e:
-        print("Не удалось распознать ", e)
+    with open(f"files/{file_title}.json") as file:
+        answers = process_test(json.load(file))
+
+    return {
+        "filename": test_file.filename,
+        "file_title": file_title,
+        "result_json": data.model_dump(),
+        "answers": answers,
+    }
+
+    # except Exception as e:
+    #     print("Не удалось распознать ", e)
 
     return {
         "filename": test_file.filename,

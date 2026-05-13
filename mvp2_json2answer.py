@@ -6,6 +6,7 @@ from langchain_openrouter import ChatOpenRouter
 from langchain_tavily import TavilySearch
 from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from mvp1_text2json import Test
 
 
 class TavilyConfig(BaseSettings):
@@ -48,6 +49,7 @@ llm = ChatOpenRouter(
     model="openrouter/free",
     temperature=0,
     model_kwargs={"response_format": {"type": "json_object"}},
+    timeout=1800,
 )
 
 parser = PydanticOutputParser(pydantic_object=QuestionOutput)
@@ -106,12 +108,18 @@ def format_answers(answers: list[Answer]) -> str:
 # chain = RunnableLambda(process_single_questions)
 
 
-def process_single_questions(question_text: str, answers: list[str]) -> QuestionOutput:
-    search_results = search.invoke(question_text)
+def process_single_questions(
+    question_text: str, answers: list[dict["text", str]]
+) -> QuestionOutput:
+    formatted_answers = "\n".join(
+        f"{i}) {a.get('text')}" for i, a in enumerate(answers, 1)
+    )
+    search_results = search.invoke(
+        question_text + ": " + formatted_answers.replace("\n", "; ")
+    )
     print(search_results, type(search_results))
     search_text = "\n".join(r["content"] for r in search_results.get("results"))
 
-    formatted_answers = "\n".join(f"{i}) {a}" for i, a in enumerate(answers, 1))
     chain = prompt | llm | parser
     result = chain.invoke(
         {
@@ -124,22 +132,16 @@ def process_single_questions(question_text: str, answers: list[str]) -> Question
     return result
 
 
-def process_test(input: dict, max_requests_per_day=50) -> TestOutput:
+def process_test(input: dict) -> TestOutput:
     questions_data = input["questions"]
     output_questions = []
-    requests_today = 0
     for idx, q in enumerate(questions_data):
-        if requests_today >= max_requests_per_day:
-            print(
-                f"Достигнут дневной лимит ({max_requests_per_day}). Продолжите завтра."
-            )
-            break
         print(f"Вопрос {idx + 1}/{len(questions_data)}...")
-
         result = process_single_questions(q["question"], q["answers"])
+        print(result, type(result))
         output_questions.append(result)
-        requests_today += 1
-        time.sleep(1)
+    print(output_questions, type(output_questions))
+    print((test_output := TestOutput(questions=output_questions)), type(test_output))
     return TestOutput(questions=output_questions)
 
 
