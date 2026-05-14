@@ -1,21 +1,21 @@
-import time
+from time import sleep
 
+from langchain_cerebras import ChatCerebras
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openrouter import ChatOpenRouter
 from langchain_tavily import TavilySearch
 from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from mvp1_text2json import Test
 
 
 class TavilyConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file="./.env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
     TAVILY_API_KEY: SecretStr
-    openrouter_api_key: SecretStr
+    CEREBRAS_API_KEY: SecretStr
 
 
 config = TavilyConfig()
@@ -43,13 +43,12 @@ search = TavilySearch(
     tavily_api_key=config.TAVILY_API_KEY.get_secret_value(),
 )
 
-llm = ChatOpenRouter(
-    api_key=config.openrouter_api_key,
-    base_url="https://openrouter.ai/api/v1",
-    model="openrouter/free",
+llm = ChatCerebras(
+    api_key=config.CEREBRAS_API_KEY,
+    model="gpt-oss-120b",
     temperature=0,
     model_kwargs={"response_format": {"type": "json_object"}},
-    timeout=1800,
+    timeout=180,
 )
 
 parser = PydanticOutputParser(pydantic_object=QuestionOutput)
@@ -114,9 +113,7 @@ def process_single_questions(
     formatted_answers = "\n".join(
         f"{i}) {a.get('text')}" for i, a in enumerate(answers, 1)
     )
-    search_results = search.invoke(
-        question_text + ": " + formatted_answers.replace("\n", "; ")
-    )
+    search_results = search.invoke(question_text)
     print(search_results, type(search_results))
     search_text = "\n".join(r["content"] for r in search_results.get("results"))
 
@@ -137,6 +134,7 @@ def process_test(input: dict) -> TestOutput:
     output_questions = []
     for idx, q in enumerate(questions_data):
         print(f"Вопрос {idx + 1}/{len(questions_data)}...")
+        sleep(2)
         result = process_single_questions(q["question"], q["answers"])
         print(result, type(result))
         output_questions.append(result)
@@ -173,5 +171,5 @@ if __name__ == "__main__":
     test_in = input_json  # TestInput(**input_json)
     test_out = process_test(test_in)
     print(test_out.model_dump_json(indent=2))
-    with open("./files/test_answer.json", "w", encoding="utf-8") as file:
+    with open("backend/files/test_answer.json", "w", encoding="utf-8") as file:
         file.write(test_out.model_dump_json(indent=4))
