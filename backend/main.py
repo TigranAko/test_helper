@@ -30,21 +30,21 @@ async def upload_file(test_file: UploadFile):
     # TODO: problem encoding
     folder = Path("files")
     folder.mkdir(exist_ok=True)
-    async with aiofiles.open(f"files/{test_file.filename}", "wb") as file:
+    async with aiofiles.open(f"backend/files/{test_file.filename}", "wb") as file:
         while chunk := await test_file.read(1024):
             await file.write(chunk)
             # TODO: файл можно не сохранять
 
-    test_json = docx2txt.process(f"./files/{test_file.filename}")
+    test_json = docx2txt.process(f"backend/files/{test_file.filename}")
     # try:
     data = parse_test(test_json)
 
-    with open(f"files/{file_title}.json", "w", encoding="utf-8") as file:
+    with open(f"backend/files/{file_title}.json", "w", encoding="utf-8") as file:
         file.write(data.model_dump_json())
 
     sleep(3)
 
-    with open(f"files/{file_title}.json") as file:
+    with open(f"backend/files/{file_title}.json") as file:
         answers = process_test(json.load(file))
 
     return {

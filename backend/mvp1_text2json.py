@@ -154,7 +154,7 @@ def main():
     try:
         data = parse_test(test)
 
-        with open("files/text_01_03.json", "w", encoding="utf-8") as file:
+        with open("backend/files/text_01_03.json", "w", encoding="utf-8") as file:
             file.write(data.model_dump_json(indent=4))
 
     except Exception as e:
