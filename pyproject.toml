@@ -9,6 +9,7 @@ dependencies = [
     "docx2txt>=0.9",
     "fastapi>=0.136.1",
     "langchain>=1.2.15",
+    "langchain-cerebras>=0.8.2",
     "langchain-openrouter>=0.2.1",
     "langchain-tavily>=0.2.18",
     "pydantic-settings>=2.14.0",
