@@ -46,6 +46,12 @@ async def downloand_user_file(test_file: UploadFile) -> dict[str, str]:
     }
 
 
+@app.get("/files/docx")
+async def get_text_docx(file_path: str) -> dict[str, str]:
+    text = docx2txt.process(file_path)
+    return {"path": file_path, "text": text}
+
+
 @app.post("/file")
 async def upload_file(test_file: UploadFile):
     # TODO: нужно разделить на несколько эндпоинтов
