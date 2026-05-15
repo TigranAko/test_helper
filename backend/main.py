@@ -1,16 +1,13 @@
+import json
 from pathlib import Path
+from time import sleep
 
 import aiofiles
 import docx2txt
 from fastapi import FastAPI, UploadFile
-from uvicorn import run
-
 from mvp1_text2json import parse_test
 from mvp2_json2answer import process_test
-
-
-from time import sleep
-import json
+from uvicorn import run
 
 app = FastAPI(title="Тест")
 
