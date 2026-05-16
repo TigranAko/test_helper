@@ -43,15 +43,10 @@ async def downloand_user_file(test_file: UploadFile) -> dict[str, str]:
     }
 
 
-@app.get("/files/docx")
-async def get_text_docx(file_path: str) -> dict[str, str]:
-    text = docx2txt.process(file_path)
-    return {"path": file_path, "text": text}
-
-
 @app.post("/files/json_text")
-async def create_json(file_title: str, text: str) -> Test:
+async def create_json(file_title: str) -> Test:
     """Создать JSON без ответов"""
+    text = docx2txt.process(f"{file_title}.docx")
     questions_without_answers: Test = parse_test(text)
     async with aiofiles.open(
         f"backend/files/{file_title}.json", "w", encoding="utf-8"
