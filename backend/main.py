@@ -43,6 +43,13 @@ async def downloand_user_file(test_file: UploadFile) -> dict[str, str]:
     }
 
 
+@app.get("/files/docx")
+async def get_list_docx_files() -> list[str]:
+    """Получить список всех файлов с расширением .docx (тексты тестов)"""
+    dir = Path("backend/files/")
+    return [item.name for item in dir.iterdir() if item.name.endswith(".docx")]
+
+
 @app.post("/files/json_text")
 async def create_json(file_title: str) -> Test:
     """Создать JSON без ответов"""
