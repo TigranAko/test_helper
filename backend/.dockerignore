@@ -1,0 +1,57 @@
+# --- Игнорируем локальные среды и кэши ---
+venv/
+.venv/
+# env/
+# .env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+.cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Игнорируем файлы IDE и редакторов ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Игнорируем логи и временные файлы ---
+*.log
+*.tmp
+*.temp
+
+# --- Игнорируем артефакты сборки uv ---
+.uv/
+uv-lock.toml
+
+# --- Игнорируем Git и другие VCS ---
+.git/
+.gitignore
+.gitmodules
+.hg/
+.svn/
+
+# --- Игнорируем пользовательские конфиги и данные ---
+*.local
+*.db
+*.sqlite3
+*.csv
+# *.json
+*.txt
+# !requirements.txt  # если нужен для совместимости
+
+# --- Игнорируем документацию и не‑исходный код ---
+docs/
+README.md
+LICENSE
+*.md
+*.rst
