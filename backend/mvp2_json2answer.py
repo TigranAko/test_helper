@@ -81,7 +81,6 @@ def format_answers(answers: list[Answer]) -> str:
     return "\n".join(f"{i}. {a.text}" for i, a in enumerate(answers, 1))
 
 
-
 def process_single_questions(
     question_text: str, answers: list[dict["text", str]]
 ) -> QuestionOutput:
@@ -146,5 +145,5 @@ if __name__ == "__main__":
     test_in = input_json  # TestInput(**input_json)
     test_out = process_test(test_in)
     print(test_out.model_dump_json(indent=2))
-    with open("backend/files/test_answer.json", "w", encoding="utf-8") as file:
+    with open("files/test_answer.json", "w", encoding="utf-8") as file:
         file.write(test_out.model_dump_json(indent=4))
