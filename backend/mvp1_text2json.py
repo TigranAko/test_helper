@@ -58,22 +58,29 @@ def parse_test(raw_text: str) -> Test:
         all_questions.extend(questions)
         print(f"Добавлено {len(questions)} вопросов")
         print("NEED FOR SPLIT", questions)
-        tail = chunk[-500:] if len(chunk) > 500 else chunk
+        chunk_lines = chunk.split("\n")
+        tail = (
+            "\n".join(chunk_lines[-5:])
+            if len(chunk_lines) > 5
+            else "\n".join(chunk_lines)
+        )
         print("Обрезанный конец", tail)
         # TODO: нужно выбрать последний вопрос предыдущего чанка
     # TODO: нужо обрабатыввать последний вопрос
+    test = Test(questions=all_questions)
+    return test
 
 
 def parse_chunk(chunk_text: str, tail: str) -> list[Question]:
-    return []
-    prompt = f"""
-    Извлеки из приведенного ниже текста все вопросы и варианты ответов.
+    # prompt = f"""
+    # Извлеки из приведенного ниже текста все вопросы и варианты ответов.
 
-    Текст:
-    {raw_text}
-    """
-    result = structured_llm.invoke(prompt)
-    return result
+    # Текст:
+    # {raw_text}
+    # """
+    # result = structured_llm.invoke(prompt)
+    # return result
+    return []
 
 
 def main():
@@ -90,7 +97,7 @@ def main():
 3). Mac OS
 4). OS/2
 """
-    test = docx2txt.process("./files/01_02.docx")
+    test = docx2txt.process("./files/history.docx")
     try:
         data = parse_test(test)
 
