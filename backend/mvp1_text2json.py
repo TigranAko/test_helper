@@ -1,5 +1,6 @@
 import docx2txt
 from langchain_openrouter import ChatOpenRouter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -42,6 +43,29 @@ structured_llm = llm.with_structured_output(Test)
 
 
 def parse_test(raw_text: str) -> Test:
+    spliter = RecursiveCharacterTextSplitter(
+        chunk_size=4000,
+        separators=["\n\n", "\n", " ", ""],
+    )
+    chunks = spliter.split_text(raw_text)
+    all_questions = []
+    tail = ""
+    for i, chunk in enumerate(chunks, 1):
+        chunk = chunk.replace("\n\n", "\n")
+        print(f"Чанк: {i}/{len(chunks)}\nДлина чанка {len(chunk)} символов")
+        print(chunk)
+        questions = parse_chunk(chunk, tail)  # TODO: Тут используется модель
+        all_questions.extend(questions)
+        print(f"Добавлено {len(questions)} вопросов")
+        print("NEED FOR SPLIT", questions)
+        tail = chunk[-500:] if len(chunk) > 500 else chunk
+        print("Обрезанный конец", tail)
+        # TODO: нужно выбрать последний вопрос предыдущего чанка
+    # TODO: нужо обрабатыввать последний вопрос
+
+
+def parse_chunk(chunk_text: str, tail: str) -> list[Question]:
+    return []
     prompt = f"""
     Извлеки из приведенного ниже текста все вопросы и варианты ответов.
 
@@ -66,7 +90,7 @@ def main():
 3). Mac OS
 4). OS/2
 """
-    # test = docx2txt.process("./files/text_01_03.docx")
+    test = docx2txt.process("./files/01_02.docx")
     try:
         data = parse_test(test)
 
