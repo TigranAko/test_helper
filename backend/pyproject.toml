@@ -12,6 +12,7 @@ dependencies = [
     "langchain-cerebras>=0.8.2",
     "langchain-openrouter>=0.2.1",
     "langchain-tavily>=0.2.18",
+    "langchain-text-splitters>=1.1.2",
     "pydantic-settings>=2.14.0",
     "python-multipart>=0.0.26",
     "uvicorn>=0.46.0",
