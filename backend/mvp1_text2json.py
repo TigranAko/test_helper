@@ -1,4 +1,5 @@
 import docx2txt
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openrouter import ChatOpenRouter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel, Field, SecretStr
@@ -41,10 +42,28 @@ llm = ChatOpenRouter(
 
 structured_llm = llm.with_structured_output(Test)
 
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "Ты - строгий парсер тестов. "
+            "Твоя задача - находить вопросы и варианты ответов. "
+            "Игнорируй последний вопрос в фрагменте",
+        ),
+        (
+            "human",
+            "Хвост предыдущего чанка:\n{previous_tail}\n\n"
+            "Текущий фрмагмент\n{current_chunk}",
+        ),
+    ]
+)
+
+chain = prompt | structured_llm
+
 
 def parse_test(raw_text: str) -> Test:
     spliter = RecursiveCharacterTextSplitter(
-        chunk_size=4000,
+        chunk_size=3000,
         separators=["\n\n", "\n", " ", ""],
     )
     chunks = spliter.split_text(raw_text)
@@ -53,11 +72,11 @@ def parse_test(raw_text: str) -> Test:
     for i, chunk in enumerate(chunks, 1):
         chunk = chunk.replace("\n\n", "\n")
         print(f"Чанк: {i}/{len(chunks)}\nДлина чанка {len(chunk)} символов")
-        print(chunk)
-        questions = parse_chunk(chunk, tail)  # TODO: Тут используется модель
-        all_questions.extend(questions)
-        print(f"Добавлено {len(questions)} вопросов")
-        print("NEED FOR SPLIT", questions)
+        chunk_test = parse_chunk(chunk, tail)  # TODO: Тут используется модель
+        new_questions = chunk_test.questions
+        print("Новые вопросы", new_questions)
+        all_questions.extend(new_questions)
+        print(f"Добавлено {len(new_questions)} вопросов")
         chunk_lines = chunk.split("\n")
         tail = (
             "\n".join(chunk_lines[-5:])
@@ -67,6 +86,8 @@ def parse_test(raw_text: str) -> Test:
         print("Обрезанный конец", tail)
         # TODO: нужно выбрать последний вопрос предыдущего чанка
     # TODO: нужо обрабатыввать последний вопрос
+    print()
+    print(all_questions)
     test = Test(questions=all_questions)
     return test
 
@@ -78,9 +99,13 @@ def parse_chunk(chunk_text: str, tail: str) -> list[Question]:
     # Текст:
     # {raw_text}
     # """
-    # result = structured_llm.invoke(prompt)
-    # return result
-    return []
+    result = chain.invoke(
+        {
+            "previous_tail": tail,
+            "current_chunk": chunk_text,
+        }
+    )
+    return result
 
 
 def main():
@@ -97,11 +122,11 @@ def main():
 3). Mac OS
 4). OS/2
 """
-    test = docx2txt.process("./files/history.docx")
+    test = docx2txt.process("./files/text_01_03_20.docx")
     try:
         data = parse_test(test)
 
-        with open("files/text_01_03.json", "w", encoding="utf-8") as file:
+        with open("files/text_01_03_20.json", "w", encoding="utf-8") as file:
             file.write(data.model_dump_json(indent=4))
 
     except Exception as e:
