@@ -3,345 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeuroTest — Загрузи тест и получи ответы</title>
+  <title>Test Helper - Прохождение тестов</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    .upload-area { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    .upload-area.dragover { 
-      background-color: #1e2937; 
-      border-color: #0ea5e9; 
-      transform: scale(1.03); 
-    }
-    .glass {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-    .question-card { transition: all 0.3s; }
+    .test-card { transition: all 0.3s; }
+    .test-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
   </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen">
+  <div class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-4xl font-bold text-center mb-4">Доступные тесты</h1>
+    <p class="text-gray-400 text-center mb-12">Выберите тест для прохождения</p>
 
-  <!-- Навбар -->
-  <nav class="bg-black/80 border-b border-white/10 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-brain text-3xl text-sky-400"></i>
-        <h1 class="text-2xl font-bold">NeuroTest</h1>
-      </div>
-
-      <!-- Таймер -->
-      <div class="glass px-5 py-2 rounded-2xl flex items-center gap-3">
-        <i class="fa-solid fa-clock text-sky-400"></i>
-        <span id="timer" class="text-xl font-bold">0:00</span>
-      </div>
-    </div>
-  </nav>
-
-  <div class="max-w-7xl mx-auto px-4 py-10">
-    <div class="flex gap-6">
-
-      <!-- Левая реклама -->
-      <div class="w-64 hidden lg:block">
-        <div class="sticky top-6 space-y-6">
-          <div class="glass rounded-3xl p-6 text-center">
-            <div class="text-xs text-gray-400 mb-3">РЕКЛАМА</div>
-            <div class="h-64 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-2xl flex items-center justify-center border border-dashed border-white/20">
-              <p class="text-gray-400">Баннер 160×600</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Основной контент -->
-      <div class="flex-1 max-w-4xl">
-
-        <!-- Шаг 1: Загрузка -->
-        <div id="upload-screen">
-          <div class="text-center mb-10">
-            <h2 class="text-4xl font-bold mb-4">Загрузи свой тест</h2>
-            <p class="text-xl text-gray-400">Нейросеть автоматически найдёт правильные ответы</p>
-          </div>
-
-          <div id="drop-area" class="upload-area glass border-4 border-dashed border-sky-500/30 rounded-3xl p-16 text-center cursor-pointer">
-            <i class="fa-solid fa-cloud-arrow-up text-6xl text-sky-400 mb-6"></i>
-            <p class="text-2xl font-semibold text-white mb-2">Перетащите файл сюда</p>
-            <p class="text-gray-400 mb-6">или нажмите для выбора</p>
-            <p class="text-sm text-gray-500">PDF, JPG, PNG, TXT (до 20 МБ)</p>
-            <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.txt">
-            
-            <div id="file-preview" class="hidden mt-8 p-6 glass rounded-2xl"></div>
-          </div>
-
-          <button onclick="processTest()" id="process-btn"
-                  class="mt-8 w-full bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700 text-white text-xl font-semibold py-6 rounded-3xl transition disabled:opacity-50"
-                  disabled>
-            <i class="fa-solid fa-wand-magic-sparkles mr-3"></i>
-            Обработать нейросетью
-          </button>
-
-          <!-- Достижения по центру -->
-          <div class="mt-10 glass rounded-3xl p-6">
-            <h3 class="font-semibold text-lg mb-4 flex items-center gap-2 justify-center">
-              <i class="fa-solid fa-trophy text-yellow-400"></i> Достижения
-            </h3>
-            <div id="achievements-mini" class="grid grid-cols-2 gap-3 text-sm"></div>
-          </div>
-
-          <!-- Соцсети -->
-          <div class="mt-8 text-center">
-            <p class="text-gray-400 text-sm mb-3">Мы в социальных сетях</p>
-            <div class="flex justify-center gap-6 text-2xl">
-              <a href="#" class="hover:text-sky-400 transition"><i class="fa-brands fa-telegram"></i></a>
-              <a href="#" class="hover:text-pink-400 transition"><i class="fa-brands fa-vk"></i></a>
-              <a href="#" class="hover:text-red-400 transition"><i class="fa-brands fa-youtube"></i></a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Шаг 2: Обработка -->
-        <div id="processing-screen" class="hidden text-center py-28">
-          <div class="inline-flex flex-col items-center gap-6">
-            <i class="fa-solid fa-spinner fa-spin text-6xl text-sky-400"></i>
-            <p class="text-2xl font-semibold">Нейросеть думает...</p>
-            <p class="text-gray-400">Это займёт 5–15 секунд</p>
-          </div>
-        </div>
-
-        <!-- Шаг 3: Тест -->
-        <div id="test-screen" class="hidden">
-          <h2 class="text-3xl font-bold mb-2" id="test-title">Основы искусственного интеллекта и нейросетей</h2>
-          
-          <div class="mb-8 glass p-5 rounded-3xl">
-            <div class="flex justify-between text-sm mb-2">
-              <span>Вопрос <span id="current-q">1</span> из <span id="total-q">5</span></span>
-              <span id="progress-text">0%</span>
-            </div>
-            <div class="h-2.5 bg-white/10 rounded-full overflow-hidden">
-              <div id="progress-bar" class="h-2.5 bg-gradient-to-r from-sky-400 to-purple-500 w-0 transition-all"></div>
-            </div>
-          </div>
-
-          <div id="questions-container" class="space-y-10"></div>
-
-          <div class="mt-10 flex flex-col items-center gap-4">
-            <button onclick="revealAnswers()" 
-                    class="glass px-10 py-4 rounded-2xl font-semibold flex items-center gap-3 w-full max-w-md">
-              <i class="fa-solid fa-eye"></i>
-              Проверить ответы
-            </button>
-
-            <!-- Кнопка вернуться к загрузке -->
-            <button onclick="resetApp()" 
-                    class="text-gray-400 hover:text-white flex items-center gap-2 text-sm underline">
-              ← Вернуться к загрузке нового теста
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Правая реклама -->
-      <div class="w-64 hidden lg:block">
-        <div class="sticky top-6 space-y-6">
-          <div class="glass rounded-3xl p-6 text-center">
-            <div class="text-xs text-gray-400 mb-3">РЕКЛАМА</div>
-            <div class="h-96 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl flex items-center justify-center border border-dashed border-white/20">
-              <p class="text-gray-400">Вертикальный баннер</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div id="test-list" class="grid gap-6">
+      <!-- Тесты будут подгружаться сюда -->
     </div>
   </div>
 
   <script>
-    let selectedFile = null;
-    let currentQuestions = [];
-    let userAnswers = {};
-    let timerInterval = null;
-    let secondsElapsed = 0;
+    // Загрузка списка тестов
+    async function loadTestList() {
+      try {
+        const res = await fetch('../backend/files/index.json');
+        const tests = await res.json();
+        
+        const container = document.getElementById('test-list');
+        container.innerHTML = '';
 
-    const sampleQuestions = [
-      { id: 1, question: "Что такое искусственный интеллект (ИИ)?", options: ["Программа, которая точно выполняет заданные инструкции", "Система, способная выполнять задачи, требующие человеческого интеллекта", "Большая база данных с правилами", "Вирус, который самостоятельно распространяется"], correct: 1 },
-      { id: 2, question: "Какой тип обучения используется, когда нейросеть учится на размеченных данных?", options: ["Обучение с подкреплением", "Обучение без учителя", "Обучение с учителем (supervised learning)", "Самообучение"], correct: 2 },
-      { id: 3, question: "Что обозначает аббревиатура LLM?", options: ["Large Language Model (Большая языковая модель)", "Low Level Machine", "Linear Learning Method", "Long Loop Memory"], correct: 0 },
-      { id: 4, question: "Какая нейросеть создана компанией xAI?", options: ["ChatGPT", "Claude", "Grok", "Gemini"], correct: 2 },
-      { id: 5, question: "Что такое токен в контексте работы языковых моделей?", options: ["Единица измерения скорости генерации", "Минимальная единица текста, которую модель обрабатывает", "Ключ шифрования запроса", "Название сервера"], correct: 1 }
-    ];
-
-    // ======================== ЗАГРУЗКА ФАЙЛА ========================
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('file-input');
-    const previewDiv = document.getElementById('file-preview');
-    const processBtn = document.getElementById('process-btn');
-
-    dropArea.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', e => e.target.files[0] && handleFile(e.target.files[0]));
-
-    dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('dragover'); });
-    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
-    dropArea.addEventListener('drop', e => {
-      e.preventDefault();
-      dropArea.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-    });
-
-    function handleFile(file) {
-      selectedFile = file;
-      previewDiv.classList.remove('hidden');
-      previewDiv.innerHTML = `
-        <div class="flex items-center gap-4">
-          <i class="fa-solid fa-file text-4xl text-sky-400"></i>
-          <div class="flex-1">
-            <p class="font-medium">${file.name}</p>
-            <p class="text-sm text-gray-400">${(file.size/1024/1024).toFixed(2)} МБ</p>
-          </div>
-          <button onclick="removeFile()" class="text-red-400">✕</button>
-        </div>`;
-      processBtn.disabled = false;
-    }
-
-    function removeFile() {
-      selectedFile = null;
-      previewDiv.classList.add('hidden');
-      processBtn.disabled = true;
-    }
-
-    // ======================== ОСНОВНАЯ ЛОГИКА ========================
-    function processTest() {
-      if (!selectedFile) return alert("Сначала загрузите файл!");
-
-      document.getElementById('upload-screen').classList.add('hidden');
-      document.getElementById('processing-screen').classList.remove('hidden');
-
-      setTimeout(() => {
-        currentQuestions = [...sampleQuestions];
-        userAnswers = {};
-        secondsElapsed = 0;
-        document.getElementById('processing-screen').classList.add('hidden');
-        document.getElementById('test-screen').classList.remove('hidden');
-        renderQuestions();
-        startTimer();
-      }, 1800);
-    }
-
-    // ======================== ТАЙМЕР ========================
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-
-      secondsElapsed = 0;
-
-      timerInterval = setInterval(() => {
-        secondsElapsed++;
-
-        const minutes = Math.floor(secondsElapsed / 60);
-        const seconds = secondsElapsed % 60;
-
-        document.getElementById('timer').textContent =
-          `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-      }, 1000);
-    }
-
-    // ======================== РЕНДЕР ВОПРОСОВ ========================
-    function renderQuestions() {
-      const container = document.getElementById('questions-container');
-      container.innerHTML = '';
-
-      currentQuestions.forEach((q, index) => {
-        const div = document.createElement('div');
-        div.className = 'question-card glass rounded-3xl p-8';
-        div.innerHTML = `
-          <div class="flex gap-4">
-            <span class="text-sky-400 font-bold text-2xl">${index + 1}.</span>
-            <div class="flex-1">
-              <p class="text-xl leading-relaxed mb-6">${q.question}</p>
-              <div class="space-y-4" id="options-${q.id}"></div>
+        tests.forEach(filename => {
+          const name = filename.replace('.json', '').replace(/_/g, ' ');
+          
+          const card = document.createElement('div');
+          card.className = 'test-card bg-gray-900 border border-gray-700 rounded-3xl p-8 cursor-pointer hover:border-sky-500';
+          card.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-2xl font-semibold mb-2">${name}</h3>
+                <p class="text-gray-400 text-sm">Готовый тест</p>
+              </div>
+              <i class="fa-solid fa-arrow-right text-3xl text-gray-500"></i>
             </div>
-          </div>`;
-        container.appendChild(div);
-
-        const opts = document.getElementById(`options-${q.id}`);
-        q.options.forEach((opt, i) => {
-          const label = document.createElement('label');
-          label.className = `flex items-center gap-4 p-5 glass rounded-2xl cursor-pointer hover:bg-white/5 transition`;
-          label.innerHTML = `
-            <input type="radio" name="q${q.id}" value="${i}" class="w-6 h-6 accent-sky-400" onchange="saveAnswer(${q.id}, ${i})">
-            <span>${opt}</span>`;
-          opts.appendChild(label);
+          `;
+          card.onclick = () => loadTest(filename);
+          container.appendChild(card);
         });
-      });
-
-      document.getElementById('total-q').textContent = currentQuestions.length;
-      updateProgress();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('test-list').innerHTML = '<p class="text-red-400">Ошибка загрузки списка тестов</p>';
+      }
     }
 
-    function saveAnswer(qId, ansIdx) {
-      userAnswers[qId] = ansIdx;
-      updateProgress();
+    // Загрузка выбранного теста
+    async function loadTest(filename) {
+      try {
+        const res = await fetch(`../backend/files/${filename}`);
+        const testData = await res.json();
+        
+        alert(`Тест "${filename}" загружен!\n\nВопросов: ${testData.questions ? testData.questions.length : 'много'}\n\n(Здесь будет полноценное прохождение теста)`);
+        // Дальше можно сделать красивый экран прохождения
+      } catch(e) {
+        alert('Не удалось загрузить тест: ' + filename);
+      }
     }
 
-    function updateProgress() {
-      const answered = Object.keys(userAnswers).length;
-      const percent = Math.round((answered / currentQuestions.length) * 100) || 0;
-
-      document.getElementById('progress-bar').style.width = percent + '%';
-      document.getElementById('progress-text').textContent = percent + '%';
-      document.getElementById('current-q').textContent = answered || 1;
-    }
-
-    // ======================== ПРОВЕРКА ОТВЕТОВ ========================
-    function revealAnswers() {
-      clearInterval(timerInterval);
-
-      let correctCount = 0;
-
-      currentQuestions.forEach(q => {
-        const container = document.getElementById(`options-${q.id}`);
-        const labels = container.querySelectorAll('label');
-
-        labels.forEach((label, i) => {
-          label.style.pointerEvents = 'none';
-
-          if (i === q.correct) {
-            label.classList.add('!border-emerald-500', 'bg-emerald-500/10');
-          }
-
-          if (userAnswers[q.id] === i) {
-            if (i === q.correct) {
-              correctCount++;
-            } else {
-              label.classList.add('!border-red-500', 'bg-red-500/10');
-            }
-          }
-        });
-      });
-
-      const percent = Math.round((correctCount / currentQuestions.length) * 100);
-
-      alert(
-        `🎉 Тест завершён!\n\n` +
-        `Время: ${document.getElementById('timer').textContent}\n` +
-        `Правильных: ${correctCount} из ${currentQuestions.length} (${percent}%)`
-      );
-    }
-
-    // ======================== СБРОС ========================
-    function resetApp() {
-      clearInterval(timerInterval);
-
-      document.getElementById('timer').textContent = '0:00';
-
-      document.getElementById('test-screen').classList.add('hidden');
-      document.getElementById('upload-screen').classList.remove('hidden');
-
-      removeFile();
-    }
-
-    // Инициализация
-    document.getElementById('timer').textContent = '0:00';
+    // Запуск при загрузке страницы
+    window.onload = loadTestList;
   </script>
 </body>
 </html>
