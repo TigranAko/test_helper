@@ -7,63 +7,84 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    .test-card { transition: all 0.3s; }
-    .test-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+    .test-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .test-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+    }
   </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen">
-  <div class="max-w-4xl mx-auto px-6 py-12">
-    <h1 class="text-4xl font-bold text-center mb-4">Доступные тесты</h1>
-    <p class="text-gray-400 text-center mb-12">Выберите тест для прохождения</p>
+  <div class="max-w-5xl mx-auto px-6 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold mb-3">Test Helper</h1>
+      <p class="text-xl text-gray-400">Выберите тест для прохождения</p>
+    </div>
 
-    <div id="test-list" class="grid gap-6">
-      <!-- Тесты будут подгружаться сюда -->
+    <div id="test-list" class="grid md:grid-cols-2 gap-6">
+      <!-- Тесты будут загружаться сюда -->
     </div>
   </div>
 
   <script>
-    // Загрузка списка тестов
+    // === Загрузка списка тестов ===
     async function loadTestList() {
       try {
-        const res = await fetch('../backend/files/index.json');
-        const tests = await res.json();
-        
+        const response = await fetch('../backend/files/index.json');
+        if (!response.ok) throw new Error('Index.json не найден');
+
+        const data = await response.json();
+        const testFiles = data.tests || data; // поддержка старого и нового формата
+
         const container = document.getElementById('test-list');
         container.innerHTML = '';
 
-        tests.forEach(filename => {
-          const name = filename.replace('.json', '').replace(/_/g, ' ');
-          
+        testFiles.forEach(filename => {
+          const displayName = filename
+            .replace('.json', '')
+            .replace(/_/g, ' ')
+            .replace(/(\d+)/g, ' $1');
+
           const card = document.createElement('div');
-          card.className = 'test-card bg-gray-900 border border-gray-700 rounded-3xl p-8 cursor-pointer hover:border-sky-500';
+          card.className = 'test-card bg-gray-900 border border-gray-700 hover:border-sky-500 rounded-3xl p-8 cursor-pointer group';
           card.innerHTML = `
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="text-2xl font-semibold mb-2">${name}</h3>
-                <p class="text-gray-400 text-sm">Готовый тест</p>
+            <div class="flex justify-between items-center">
+              <div class="flex-1">
+                <h3 class="text-2xl font-semibold mb-1 group-hover:text-sky-400 transition-colors">${displayName}</h3>
+                <p class="text-gray-500 text-sm">Готовый тест • JSON</p>
               </div>
-              <i class="fa-solid fa-arrow-right text-3xl text-gray-500"></i>
+              <i class="fa-solid fa-chevron-right text-3xl text-gray-600 group-hover:text-sky-400 transition-colors"></i>
             </div>
           `;
-          card.onclick = () => loadTest(filename);
+          
+          card.addEventListener('click', () => loadAndStartTest(filename));
           container.appendChild(card);
         });
-      } catch(e) {
-        console.error(e);
-        document.getElementById('test-list').innerHTML = '<p class="text-red-400">Ошибка загрузки списка тестов</p>';
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('test-list').innerHTML = `
+          <div class="bg-red-900/30 border border-red-500 rounded-3xl p-8 text-center col-span-full">
+            <p class="text-red-400">Не удалось загрузить список тестов.<br>Проверьте файл backend/files/index.json</p>
+          </div>`;
       }
     }
 
-    // Загрузка выбранного теста
-    async function loadTest(filename) {
+    // === Загрузка и запуск выбранного теста ===
+    async function loadAndStartTest(filename) {
       try {
         const res = await fetch(`../backend/files/${filename}`);
+        if (!res.ok) throw new Error('Тест не найден');
+
         const testData = await res.json();
         
-        alert(`Тест "${filename}" загружен!\n\nВопросов: ${testData.questions ? testData.questions.length : 'много'}\n\n(Здесь будет полноценное прохождение теста)`);
-        // Дальше можно сделать красивый экран прохождения
-      } catch(e) {
-        alert('Не удалось загрузить тест: ' + filename);
+        alert(`✅ Тест загружен: "${testData.title || filename}"\n\nВопросов: ${testData.questions ? testData.questions.length : 'много'}\n\n(Скоро здесь будет полноценный интерфейс прохождения)`);
+        
+        // В будущем здесь будет переход на экран с вопросами
+      } catch (e) {
+        alert(`❌ Не удалось загрузить тест: ${filename}\nУбедитесь, что файл существует в backend/files/`);
       }
     }
 
