@@ -27,6 +27,41 @@
     .answer-item:hover {
       transform: translateX(4px);
     }
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .checkbox-wrapper:hover {
+      background: rgba(100, 116, 139, 0.1);
+      border-color: rgb(100, 116, 139);
+    }
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      accent-color: rgb(59, 130, 246);
+    }
+    .checkbox-wrapper.selected {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgb(59, 130, 246);
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, rgb(59, 130, 246), rgb(34, 197, 94));
+      transition: width 0.3s ease;
+    }
+    .mode-selection-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .mode-selection-card:hover {
+      transform: scale(1.05);
+    }
   </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen">
@@ -34,11 +69,64 @@
   <div id="test-list-screen" class="max-w-5xl mx-auto px-6 py-12">
     <div class="text-center mb-12">
       <h1 class="text-5xl font-bold mb-3">Test Helper</h1>
-      <p class="text-xl text-gray-400">Выберите тест для просмотра правильных ответов</p>
+      <p class="text-xl text-gray-400">Выберите тест и режим</p>
     </div>
 
     <div id="test-list" class="grid md:grid-cols-2 gap-6">
       <!-- Тесты будут загружаться сюда -->
+    </div>
+  </div>
+
+  <!-- Экран выбора режима -->
+  <div id="mode-selection-screen" class="hidden max-w-4xl mx-auto px-6 py-12">
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 id="mode-test-title" class="text-4xl font-bold mb-2">Тест</h1>
+        <p class="text-gray-400">Выберите, как вы хотите работать с тестом</p>
+      </div>
+      <button 
+        onclick="goBackToList()" 
+        class="bg-gray-800 hover:bg-gray-700 transition-colors px-6 py-3 rounded-lg flex items-center gap-2"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        Вернуться
+      </button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-12">
+      <!-- Карточка для просмотра ответов -->
+      <div 
+        class="mode-selection-card bg-gradient-to-br from-green-900/30 to-green-900/10 border-2 border-green-700 rounded-2xl p-8 hover:border-green-500"
+        onclick="showAnswers()"
+      >
+        <div class="text-center">
+          <div class="text-5xl mb-4">
+            <i class="fa-solid fa-eye text-green-400"></i>
+          </div>
+          <h2 class="text-2xl font-bold mb-3">Просмотр ответов</h2>
+          <p class="text-gray-300 mb-6">Посмотрите правильные ответы на все вопросы теста</p>
+          <button class="bg-green-600 hover:bg-green-500 transition-colors px-6 py-2 rounded-lg font-semibold w-full">
+            Открыть
+          </button>
+        </div>
+      </div>
+
+      <!-- Карточка для прохождения теста -->
+      <div 
+        class="mode-selection-card bg-gradient-to-br from-blue-900/30 to-blue-900/10 border-2 border-blue-700 rounded-2xl p-8 hover:border-blue-500"
+        onclick="startTest()"
+      >
+        <div class="text-center">
+          <div class="text-5xl mb-4">
+            <i class="fa-solid fa-pencil text-blue-400"></i>
+          </div>
+          <h2 class="text-2xl font-bold mb-3">Пройти тест</h2>
+          <p class="text-gray-300 mb-6">Ответьте на вопросы и получите оценку</p>
+          <button class="bg-blue-600 hover:bg-blue-500 transition-colors px-6 py-2 rounded-lg font-semibold w-full">
+            Начать
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -50,7 +138,7 @@
         <p id="test-stats" class="text-gray-400">Вопросов: 0</p>
       </div>
       <button 
-        onclick="goBackToList()" 
+        onclick="goBackToModeSelection()" 
         class="bg-gray-800 hover:bg-gray-700 transition-colors px-6 py-3 rounded-lg flex items-center gap-2"
       >
         <i class="fa-solid fa-arrow-left"></i>
@@ -63,17 +151,150 @@
     </div>
   </div>
 
-  <script>
-    let currentTestData = null;
+  <!-- Экран прохождения теста -->
+  <div id="test-taking-screen" class="hidden max-w-4xl mx-auto px-6 py-12">
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 id="taking-test-title" class="text-4xl font-bold mb-2">Тест</h1>
+          <p id="question-counter" class="text-gray-400">Вопрос 1 из 10</p>
+        </div>
+        <button 
+          onclick="goBackToModeSelection()" 
+          class="bg-gray-800 hover:bg-gray-700 transition-colors px-6 py-3 rounded-lg flex items-center gap-2"
+        >
+          <i class="fa-solid fa-times"></i>
+          Выход
+        </button>
+      </div>
+      
+      <!-- Прогресс-бар -->
+      <div class="bg-gray-800 rounded-full h-2 overflow-hidden">
+        <div id="progress-bar" class="progress-bar h-full" style="width: 0%"></div>
+      </div>
+    </div>
 
-    // === Загрузка списка тестов ===
+    <!-- Вопрос и варианты ответов -->
+    <div id="question-content" class="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-8">
+      <div class="mb-8">
+        <div class="flex items-start gap-3 mb-6">
+          <span class="bg-blue-600 text-white px-4 py-1 rounded-full font-bold min-w-max">Q<span id="current-q-num">1</span></span>
+          <h2 id="current-question" class="text-2xl font-semibold pt-1">Текст вопроса</h2>
+        </div>
+      </div>
+
+      <div id="answers-list" class="space-y-3">
+        <!-- Варианты ответов будут загружаться сюда -->
+      </div>
+    </div>
+
+    <!-- Кнопки навигации -->
+    <div class="flex gap-4 justify-between">
+      <button 
+        id="btn-prev"
+        onclick="previousQuestion()" 
+        class="bg-gray-800 hover:bg-gray-700 transition-colors px-6 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        Назад
+      </button>
+
+      <div class="flex gap-4">
+        <button 
+          id="btn-next"
+          onclick="nextQuestion()" 
+          class="bg-blue-600 hover:bg-blue-500 transition-colors px-8 py-3 rounded-lg flex items-center gap-2"
+        >
+          Далее
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+        <button 
+          id="btn-finish"
+          onclick="finishTest()" 
+          class="hidden bg-green-600 hover:bg-green-500 transition-colors px-8 py-3 rounded-lg flex items-center gap-2"
+        >
+          Проверить
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран результатов -->
+  <div id="results-screen" class="hidden max-w-4xl mx-auto px-6 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold mb-6">Результаты теста</h1>
+    </div>
+
+    <!-- Основной результат -->
+    <div class="bg-gradient-to-r from-blue-900/30 to-blue-900/10 border-2 border-blue-700 rounded-2xl p-12 mb-12 text-center">
+      <div class="mb-8">
+        <div class="text-7xl font-bold text-blue-400 mb-3">
+          <span id="result-correct">0</span>/<span id="result-total">0</span>
+        </div>
+        <p class="text-2xl text-gray-300">правильных ответов</p>
+      </div>
+
+      <div class="mb-6">
+        <div class="bg-gray-800 rounded-full h-3 overflow-hidden mb-3">
+          <div id="result-progress-bar" class="progress-bar h-full" style="width: 0%"></div>
+        </div>
+        <p class="text-4xl font-bold text-green-400">
+          <span id="result-percentage">0</span>%
+        </p>
+      </div>
+
+      <p id="result-message" class="text-xl text-gray-300"></p>
+    </div>
+
+    <!-- Неправильные ответы -->
+    <div id="incorrect-answers-section" class="mb-12 hidden">
+      <h2 class="text-2xl font-bold mb-6 text-red-400">
+        <i class="fa-solid fa-circle-xmark mr-2"></i>
+        Вопросы с ошибками
+      </h2>
+      <div id="incorrect-answers-list" class="space-y-4">
+        <!-- Неправильные ответы будут загружаться сюда -->
+      </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="flex gap-4 justify-center">
+      <button 
+        onclick="goBackToModeSelection()" 
+        class="bg-gray-800 hover:bg-gray-700 transition-colors px-8 py-3 rounded-lg flex items-center gap-2"
+      >
+        <i class="fa-solid fa-arrow-left"></i>
+        К выбору режима
+      </button>
+      <button 
+        onclick="goBackToList()" 
+        class="bg-blue-600 hover:bg-blue-500 transition-colors px-8 py-3 rounded-lg flex items-center gap-2"
+      >
+        <i class="fa-solid fa-home"></i>
+        На главную
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ===== СОСТОЯНИЕ ПРИЛОЖЕНИЯ =====
+    let appState = {
+      currentTestData: null,
+      currentTestFilename: '',
+      currentQuestionIndex: 0,
+      userAnswers: [], // массив с выбранными ответами для каждого вопроса
+      mode: null // 'answers' или 'test'
+    };
+
+    // ===== ЗАГРУЗКА СПИСКА ТЕСТОВ =====
     async function loadTestList() {
       try {
         const response = await fetch('../backend/files/index.json');
         if (!response.ok) throw new Error('Index.json не найден');
 
         const testFiles = await response.json();
-
         const container = document.getElementById('test-list');
         container.innerHTML = '';
 
@@ -92,14 +313,14 @@
                 <h3 class="text-2xl font-semibold mb-1 group-hover:text-sky-400 transition-colors">${displayName}</h3>
                 <p class="text-gray-500 text-sm">
                   <i class="fa-solid fa-file-pdf mr-2"></i>
-                  Просмотр ответов
+                  Выбрать режим
                 </p>
               </div>
               <i class="fa-solid fa-chevron-right text-3xl text-gray-600 group-hover:text-sky-400 transition-colors"></i>
             </div>
           `;
           
-          card.addEventListener('click', () => loadAndShowAnswers(filename));
+          card.addEventListener('click', () => selectTest(filename));
           container.appendChild(card);
         });
 
@@ -116,23 +337,44 @@
       }
     }
 
-    // === Загрузка и отображение ответов теста ===
-    async function loadAndShowAnswers(filename) {
+    // ===== ВЫБОР ТЕСТА И ПЕРЕХОД К ВЫБОРУ РЕЖИМА =====
+    async function selectTest(filename) {
       try {
         const res = await fetch(`../backend/files/${filename}`);
         if (!res.ok) throw new Error('Тест не найден');
 
-        currentTestData = await res.json();
-        displayAnswers(filename);
+        appState.currentTestData = await res.json();
+        appState.currentTestFilename = filename;
+        showModeSelection();
 
       } catch (e) {
         alert(`❌ Не удалось загрузить тест: ${filename}\nУбедитесь, что файл существует в backend/files/`);
       }
     }
 
-    // === Отображение вопросов и ответов ===
-    function displayAnswers(filename) {
-      const testName = filename
+    // ===== ПОКАЗАТЬ ЭКРАН ВЫБОРА РЕЖИМА =====
+    function showModeSelection() {
+      const testName = appState.currentTestFilename
+        .replace('.json', '')
+        .replace(/_/g, ' ')
+        .replace(/(\d+)/g, ' $1')
+        .trim();
+
+      document.getElementById('mode-test-title').textContent = testName;
+
+      hideAllScreens();
+      document.getElementById('mode-selection-screen').classList.remove('hidden');
+    }
+
+    // ===== ПОКАЗАТЬ ОТВЕТЫ =====
+    function showAnswers() {
+      appState.mode = 'answers';
+      displayAnswers();
+    }
+
+    // ===== ОТОБРАЖЕНИЕ ВОПРОСОВ И ОТВЕТОВ =====
+    function displayAnswers() {
+      const testName = appState.currentTestFilename
         .replace('.json', '')
         .replace(/_/g, ' ')
         .replace(/(\d+)/g, ' $1')
@@ -140,7 +382,7 @@
 
       document.getElementById('test-title').textContent = testName;
       
-      const questions = currentTestData.questions || [];
+      const questions = appState.currentTestData.questions || [];
       document.getElementById('test-stats').textContent = `Вопросов: ${questions.length}`;
 
       const container = document.getElementById('questions-container');
@@ -192,21 +434,263 @@
         container.appendChild(questionDiv);
       });
 
-      // Переключение на экран ответов
-      document.getElementById('test-list-screen').classList.add('hidden');
+      hideAllScreens();
       document.getElementById('answers-screen').classList.remove('hidden');
     }
 
-    // === Возврат к списку тестов ===
-    function goBackToList() {
-      currentTestData = null;
-      document.getElementById('test-list-screen').classList.remove('hidden');
-      document.getElementById('answers-screen').classList.add('hidden');
-      document.getElementById('questions-container').innerHTML = '';
+    // ===== НАЧАТЬ ТЕСТ =====
+    function startTest() {
+      appState.mode = 'test';
+      appState.currentQuestionIndex = 0;
+      appState.userAnswers = [];
+      
+      const questions = appState.currentTestData.questions || [];
+      appState.userAnswers = questions.map(() => []);
+
+      displayTestQuestion();
     }
 
-    // Запуск при загрузке страницы
-    window.onload = loadTestList;
+    // ===== ОТОБРАЖЕНИЕ ВОПРОСА ДЛЯ ТЕСТА =====
+    function displayTestQuestion() {
+      const questions = appState.currentTestData.questions || [];
+      const currentQ = questions[appState.currentQuestionIndex];
+      
+      const testName = appState.currentTestFilename
+        .replace('.json', '')
+        .replace(/_/g, ' ')
+        .replace(/(\d+)/g, ' $1')
+        .trim();
+
+      document.getElementById('taking-test-title').textContent = testName;
+      document.getElementById('question-counter').textContent = 
+        `Вопрос ${appState.currentQuestionIndex + 1} из ${questions.length}`;
+      document.getElementById('current-q-num').textContent = appState.currentQuestionIndex + 1;
+      document.getElementById('current-question').textContent = currentQ.question;
+
+      // Обновить прогресс-бар
+      const progress = ((appState.currentQuestionIndex + 1) / questions.length) * 100;
+      document.getElementById('progress-bar').style.width = progress + '%';
+
+      // Отобразить варианты ответов
+      const answersList = document.getElementById('answers-list');
+      answersList.innerHTML = '';
+
+      currentQ.answers.forEach((answer, answerIndex) => {
+        const label = document.createElement('label');
+        label.className = 'checkbox-wrapper';
+        
+        const isChecked = appState.userAnswers[appState.currentQuestionIndex].includes(answerIndex);
+        
+        label.innerHTML = `
+          <input 
+            type="checkbox" 
+            class="answer-checkbox" 
+            data-answer-index="${answerIndex}"
+            ${isChecked ? 'checked' : ''}
+          >
+          <span class="flex-1 text-lg">${answer.text}</span>
+        `;
+
+        // Добавить класс selected если выбран
+        if (isChecked) {
+          label.classList.add('selected');
+        }
+
+        const checkbox = label.querySelector('input');
+        checkbox.addEventListener('change', (e) => {
+          handleAnswerSelection(answerIndex, e.target.checked);
+          if (e.target.checked) {
+            label.classList.add('selected');
+          } else {
+            label.classList.remove('selected');
+          }
+        });
+
+        answersList.appendChild(label);
+      });
+
+      // Обновить состояние кнопок
+      updateNavigationButtons();
+
+      hideAllScreens();
+      document.getElementById('test-taking-screen').classList.remove('hidden');
+    }
+
+    // ===== ОБРАБОТКА ВЫБОРА ОТВЕТА =====
+    function handleAnswerSelection(answerIndex, isChecked) {
+      if (isChecked) {
+        if (!appState.userAnswers[appState.currentQuestionIndex].includes(answerIndex)) {
+          appState.userAnswers[appState.currentQuestionIndex].push(answerIndex);
+        }
+      } else {
+        appState.userAnswers[appState.currentQuestionIndex] = 
+          appState.userAnswers[appState.currentQuestionIndex].filter(i => i !== answerIndex);
+      }
+    }
+
+    // ===== ОБНОВИТЬ СОСТОЯНИЕ КНОПОК НАВИГАЦИИ =====
+    function updateNavigationButtons() {
+      const questions = appState.currentTestData.questions || [];
+      const isFirstQuestion = appState.currentQuestionIndex === 0;
+      const isLastQuestion = appState.currentQuestionIndex === questions.length - 1;
+
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const btnFinish = document.getElementById('btn-finish');
+
+      btnPrev.disabled = isFirstQuestion;
+
+      if (isLastQuestion) {
+        btnNext.classList.add('hidden');
+        btnFinish.classList.remove('hidden');
+      } else {
+        btnNext.classList.remove('hidden');
+        btnFinish.classList.add('hidden');
+      }
+    }
+
+    // ===== СЛЕДУЮЩИЙ ВОПРОС =====
+    function nextQuestion() {
+      const questions = appState.currentTestData.questions || [];
+      if (appState.currentQuestionIndex < questions.length - 1) {
+        appState.currentQuestionIndex++;
+        displayTestQuestion();
+      }
+    }
+
+    // ===== ПРЕДЫДУЩИЙ ВОПРОС =====
+    function previousQuestion() {
+      if (appState.currentQuestionIndex > 0) {
+        appState.currentQuestionIndex--;
+        displayTestQuestion();
+      }
+    }
+
+    // ===== ЗАВЕРШИТЬ ТЕСТ И ПОКАЗАТЬ РЕЗУЛЬТАТЫ =====
+    function finishTest() {
+      const questions = appState.currentTestData.questions || [];
+      let correctCount = 0;
+      const incorrectQuestions = [];
+
+      questions.forEach((question, qIndex) => {
+        const userAnswerIndices = appState.userAnswers[qIndex] || [];
+        const correctAnswerIndices = question.answers
+          .map((a, i) => a.isCorrect ? i : -1)
+          .filter(i => i !== -1);
+
+        // Проверка: пользователь выбрал ровно те же ответы, что и правильные
+        const isCorrect = 
+          userAnswerIndices.length === correctAnswerIndices.length &&
+          userAnswerIndices.every(i => correctAnswerIndices.includes(i));
+
+        if (isCorrect) {
+          correctCount++;
+        } else {
+          incorrectQuestions.push({
+            index: qIndex,
+            question: question.question,
+            userAnswers: userAnswerIndices.map(i => question.answers[i].text),
+            correctAnswers: correctAnswerIndices.map(i => question.answers[i].text)
+          });
+        }
+      });
+
+      displayResults(correctCount, questions.length, incorrectQuestions);
+    }
+
+    // ===== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ =====
+    function displayResults(correctCount, totalCount, incorrectQuestions) {
+      const percentage = Math.round((correctCount / totalCount) * 100);
+
+      document.getElementById('result-correct').textContent = correctCount;
+      document.getElementById('result-total').textContent = totalCount;
+      document.getElementById('result-percentage').textContent = percentage;
+
+      // Обновить прогресс-бар
+      document.getElementById('result-progress-bar').style.width = percentage + '%';
+
+      // Выбрать сообщение в зависимости от процента
+      let message = '';
+      if (percentage === 100) {
+        message = '🎉 Отлично! Вы ответили на все вопросы правильно!';
+      } else if (percentage >= 80) {
+        message = '✅ Хорошо! Вы хорошо разбираетесь в материале.';
+      } else if (percentage >= 60) {
+        message = '👍 Неплохо! Но есть над чем поработать.';
+      } else if (percentage >= 40) {
+        message = '⚠️ Нужно повторить материал.';
+      } else {
+        message = '❌ Рекомендуем еще раз прочитать материал.';
+      }
+
+      document.getElementById('result-message').textContent = message;
+
+      // Показать неправильные ответы если есть
+      const incorrectSection = document.getElementById('incorrect-answers-section');
+      if (incorrectQuestions.length > 0) {
+        incorrectSection.classList.remove('hidden');
+        const incorrectList = document.getElementById('incorrect-answers-list');
+        incorrectList.innerHTML = '';
+
+        incorrectQuestions.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'bg-gray-900 border border-red-700/30 rounded-lg p-6';
+          div.innerHTML = `
+            <div class="mb-3">
+              <p class="text-red-400 font-semibold mb-1">
+                <i class="fa-solid fa-circle-xmark mr-2"></i>
+                Вопрос ${item.index + 1}: ${item.question}
+              </p>
+            </div>
+            <div class="mb-3">
+              <p class="text-sm text-gray-400 mb-2">Ваши ответы:</p>
+              <div class="bg-gray-800/50 rounded p-3 text-red-300">
+                ${item.userAnswers.length > 0 ? item.userAnswers.join(', ') : '<em>нет ответа</em>'}
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400 mb-2">Правильные ответы:</p>
+              <div class="bg-gray-800/50 rounded p-3 text-green-300">
+                ${item.correctAnswers.join(', ')}
+              </div>
+            </div>
+          `;
+          incorrectList.appendChild(div);
+        });
+      } else {
+        incorrectSection.classList.add('hidden');
+      }
+
+      hideAllScreens();
+      document.getElementById('results-screen').classList.remove('hidden');
+    }
+
+    // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+    function hideAllScreens() {
+      document.getElementById('test-list-screen').classList.add('hidden');
+      document.getElementById('mode-selection-screen').classList.add('hidden');
+      document.getElementById('answers-screen').classList.add('hidden');
+      document.getElementById('test-taking-screen').classList.add('hidden');
+      document.getElementById('results-screen').classList.add('hidden');
+    }
+
+    function goBackToModeSelection() {
+      showModeSelection();
+    }
+
+    function goBackToList() {
+      appState.currentTestData = null;
+      appState.currentTestFilename = '';
+      appState.mode = null;
+      appState.currentQuestionIndex = 0;
+      appState.userAnswers = [];
+      
+      hideAllScreens();
+      document.getElementById('test-list-screen').classList.remove('hidden');
+    }
+
+    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    window.addEventListener('load', loadTestList);
   </script>
 </body>
 </html>
