@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/v1")
 
 @router.get("/")
 def main():
-    return "Hello from test-helper!"
+    return "Hello from NeuroTest!"
 
 
 @router.post("/files")
